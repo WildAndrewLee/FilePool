@@ -35,19 +35,15 @@ public class Manager implements Runnable{
 		try{
 			if(type.equals("distributor")){
 				while(true){
-					System.out.println(id);
-					server = new ServerSocket(666, 69);
+					server = new ServerSocket(Integer.parseInt(id), 69);
 					
 					socket = server.accept();
 					
 					oinput = new ObjectInputStream(socket.getInputStream());
-					
+										
 					Object obj = oinput.readObject();
 					
-					while(!(obj instanceof Command)){
-						System.out.println(obj.toString());
-						obj = oinput.readObject();
-					}
+					//System.out.println(obj);
 					
 					Command command = (Command) obj;
 					
@@ -71,9 +67,6 @@ public class Manager implements Runnable{
 				
 				ooutput.writeObject(command);
 				ooutput.flush();
-				
-				socket.close();
-				ooutput.close();
 				
 				server = new ServerSocket(Integer.parseInt(id), 69);
 				
