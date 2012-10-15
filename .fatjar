@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Mon Oct 15 14:46:43 EDT 2012
+onejar.license.required=false
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=true
+jarname=File Pool_fat.jar
+manifest.mergeall=true
+manifest.mainclass=Main
+manifest.file=<createnew>
+jarname.isextern=false
+onejar.expand=
+excludes=
+includes=

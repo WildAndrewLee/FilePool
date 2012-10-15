@@ -1,0 +1,22 @@
+/*
+				FileReader file = new FileReader(command);
+				BufferedReader br = new BufferedReader(file);
+				
+				String contents, line;
+				contents = line = br.readLine();
+				
+				while((line = br.readLine()) != null){
+					contents += System.getProperty("line.separator") + line;
+				}
+				
+				System.out.println(contents);
+				
+				output.writeObject(contents);
+				output.flush();
+				*/
+				
+				try{
+				Thread.sleep(500);
+				run();
+			}
+			catch(InterruptedException ex){}
