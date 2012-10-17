@@ -58,6 +58,10 @@ public class Status {
 		return pool;
 	}
 	
+	public User getUser(){
+		return user;
+	}
+	
 	public void startDistro(){
 		Main.distro = new Distributor();
 	}

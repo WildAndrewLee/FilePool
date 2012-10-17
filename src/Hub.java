@@ -1,15 +1,23 @@
 import java.awt.Desktop;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 public class Hub extends JPanel{
 	private JLabel dist = new JLabel("Distributing:");
@@ -20,6 +28,9 @@ public class Hub extends JPanel{
 	
 	private JList distList = new JList(dmodel);
 	private JList slist = new JList(smodel);
+	
+	private JScrollPane dscroll = new JScrollPane(distList);
+	private JScrollPane sscroll = new JScrollPane(slist);
 	
 	private ArrayList<String> receive = new ArrayList<String>();
 	
@@ -44,11 +55,14 @@ public class Hub extends JPanel{
 			}
 		}
 		
-		distList.setBorder(BorderFactory.createEtchedBorder());
-		slist.setBorder(BorderFactory.createEtchedBorder());
+		dscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		sscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		
-		distList.setBounds(10, 40, 375, 300);
-		slist.setBounds(400, 40, 375, 300);
+		distList.setBounds(10, 40, 370, 300);
+		slist.setBounds(400, 40, 370, 300);
+		
+		dscroll.setBounds(10, 40, 375, 300);
+		sscroll.setBounds(400, 40, 375, 300);
 		
 		dist.setBounds(10, 10, 200, 20);
 		syncing.setBounds(400, 10, 200, 20);
@@ -64,8 +78,40 @@ public class Hub extends JPanel{
 		
 		add(dist);
 		add(syncing);
-		add(distList);
-		add(slist);
+		add(dscroll);
+		add(sscroll);
+		
+		distList.setDropTarget(new DropTarget(){
+			public synchronized void drop(DropTargetDropEvent e){
+				try{
+					e.acceptDrop(DnDConstants.ACTION_COPY);
+					
+					List<File> droppedFiles = (List<File>) e.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+					
+					for (File file : droppedFiles){
+						Random rand = new Random();
+						int id = rand.nextInt(40001) + 10000;
+						
+						while(Main.distro.getPorts().contains(id)){
+							id = rand.nextInt(40001) + 10000;
+						}
+						
+						Drop drop = new Drop(file.getAbsolutePath(), "distributor", Main.status.getIP(), "", id + "");
+						
+						if(Main.status.getPool().addFile(drop)){
+							dmodel.addElement(drop.getPath());
+							Main.distro.addDrop(drop);
+						}
+						else{
+							JOptionPane.showMessageDialog(null, "An error occured while adding this file.");
+						}
+					}
+				}
+				catch(Exception ex){
+					ex.printStackTrace();
+				}
+			}
+		});
 		
 		Main.status.startDistro();
 	}
