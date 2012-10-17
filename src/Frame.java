@@ -16,10 +16,7 @@ public class Frame extends JFrame {
         	if(getHeight() < 500 && getWidth() < 800){
         		setSize(getWidth() + 8, getHeight() + 6);
         		
-        		Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
-        		int x = (int) ((dimension.getWidth() - getSize().getWidth()) / 2);
-        		int y = (int) ((dimension.getHeight() - getSize().getHeight()) / 2);
-        		setLocation(x, y);
+        		center();
         	}
         	else{
         		loggedTimer.stop();
@@ -40,12 +37,16 @@ public class Frame extends JFrame {
 		add(metapanel);
 		pack();
 		
+		center();
+		
+		setVisible(true);
+	}
+	
+	private void center(){
 		Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
 		int x = (int) ((dimension.getWidth() - getSize().getWidth()) / 2);
 		int y = (int) ((dimension.getHeight() - getSize().getHeight()) / 2);
 		setLocation(x, y);
-		
-		setVisible(true);
 	}
 	
 	private void setupFrame(){
@@ -63,7 +64,10 @@ public class Frame extends JFrame {
 		validate();
 		repaint();
 		
-		loggedTimer.start();
+		setSize(800, 387);
+		setupFrame();
+		center();
+		//loggedTimer.start();
 	}
 	
 	public void loggedOut(){
