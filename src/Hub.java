@@ -1,53 +1,74 @@
+import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 
 public class Hub extends JPanel{
 	private JLabel dist = new JLabel("Distributing:");
 	private JLabel syncing = new JLabel("Storing:");
+	private JLabel pool = new JLabel("Pool:");
 	
 	private DefaultListModel dmodel = new DefaultListModel();
 	private DefaultListModel smodel = new DefaultListModel();
+	private DefaultTableModel pmodel = new DefaultTableModel(){
+		public boolean isCellEditable(int x, int y){
+			return false;
+		}
+	};
 	
 	private JList distList = new JList(dmodel);
 	private JList slist = new JList(smodel);
+	private JTable plist = new JTable(pmodel);
 	
 	private JScrollPane dscroll = new JScrollPane(distList);
 	private JScrollPane sscroll = new JScrollPane(slist);
+	private JScrollPane pscroll = new JScrollPane(plist);
 	
 	private ArrayList<String> receive = new ArrayList<String>();
+	private ArrayList<Drop> contactDrops = new ArrayList<Drop>();
+	
+	private int cIndex = -1;
+	private JList sList = null;
+	
+	private ContextMenu menu = null;
 	
 	public Hub(){
 		setLayout(null);
+		setDoubleBuffered(true);
 		
 		Pool pool = Main.status.getPool();
 		
-		String[][] files = pool.Files;
+		Drop[] drops = pool.getDrops();
 		
-		for(int n = 0; n < files.length; n++){
-			if(files[n][1].equals("distributor")){
-				dmodel.add(dmodel.size(), files[n][0]);
+		for(int n = 0; n < drops.length; n++){
+			if(drops[n].getType().equals("distributor")){
+				dmodel.add(dmodel.size(), drops[n].getPath());
 			}
-			else if(files[n][1].equals("client")){
-				smodel.add(smodel.size(), files[n][3]);
-				receive.add(files[n][3]);
+			else if(drops[n].getType().equals("client")){				
+				smodel.add(smodel.size(), drops[n].getDLTO());
+				receive.add(drops[n].getDLTO());
 			}
 			else{
 				JOptionPane.showMessageDialog(null, "A fatal error occured while loading your hub.");
@@ -55,23 +76,40 @@ public class Hub extends JPanel{
 			}
 		}
 		
+		pmodel.addColumn("Name");
+		pmodel.addColumn("File ID");
+		pmodel.addColumn("File");
+		pmodel.addColumn("IP Address");
+		
 		dscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		sscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		pscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		distList.setBounds(10, 40, 370, 300);
 		slist.setBounds(400, 40, 370, 300);
+		plist.setBounds(10, 375, 800, 100);
 		
 		dscroll.setBounds(10, 40, 375, 300);
 		sscroll.setBounds(400, 40, 375, 300);
+		pscroll.setBounds(10, 372, 765, 100);
 		
 		dist.setBounds(10, 10, 200, 20);
 		syncing.setBounds(400, 10, 200, 20);
+		this.pool.setBounds(10, 345, 200, 20);
 		
 		distList.setVisible(true);
 		slist.setVisible(true);
+		plist.setVisible(true);
 		
-		distList.addMouseListener(new ListListener());
-		slist.addMouseListener(new ListListener());
+		plist.setShowGrid(false);
+		
+		ListListener ll = new ListListener();
+		
+		distList.addMouseListener(ll);
+		distList.addMouseMotionListener(ll);
+		slist.addMouseListener(ll);
+		slist.addMouseMotionListener(ll);
+		plist.addMouseListener(new PoolListener());
 		
 		distList.setCellRenderer(new Row());
 		slist.setCellRenderer(new Row());
@@ -80,6 +118,8 @@ public class Hub extends JPanel{
 		add(syncing);
 		add(dscroll);
 		add(sscroll);
+		add(this.pool);
+		add(pscroll);
 		
 		distList.setDropTarget(new DropTarget(){
 			public synchronized void drop(DropTargetDropEvent e){
@@ -113,6 +153,8 @@ public class Hub extends JPanel{
 			}
 		});
 		
+		menu = new ContextMenu();
+		
 		Main.status.startDistro();
 	}
 	
@@ -121,7 +163,7 @@ public class Hub extends JPanel{
 			String val = receive.get(n).toString();
 			
 			if(val.equals(dlto)){				
-				if(percent == 100){
+				if(percent == 100){					
 					smodel.set(n, dlto);
 				}
 				else{
@@ -134,23 +176,129 @@ public class Hub extends JPanel{
 		slist.repaint();
 	}
 	
-	private class ListListener implements MouseListener{
+	public void loadPool(){
+		Pooler pooler = new Pooler(plist);
+		Thread thread = new Thread(pooler);
+		thread.start();
+	}
+	
+	public int getIndex(){
+		return cIndex;
+	}
+	
+	public JList getList(){
+		return sList;
+	}
+	
+	public DefaultListModel getModel(){
+		return sList == distList ? dmodel : smodel;
+	}
+	
+	public void remove(){
+		Object removed = null;
+		
+		if(sList == distList){
+			removed = dmodel.get(cIndex);
+			dmodel.removeElementAt(cIndex);
+			Main.distro.remove(removed, 1);
+		}
+		else{
+			removed = smodel.get(cIndex);
+			smodel.removeElementAt(cIndex);
+			Main.distro.remove(removed, 2);
+		}
+		
+		cIndex = -1;
+	}
+	
+	private class PoolListener implements MouseListener{
 		public void mouseClicked(MouseEvent e){
-			if(e.getClickCount() == 2 && !e.isConsumed()){
-				JList source = (JList) e.getSource();
-				
-				try{
-					File file = new File(source.getSelectedValue().toString());
-					Desktop.getDesktop().open(file);
-				}
-				catch(IOException e1){
-					JOptionPane.showMessageDialog(null, "Could not open file. Please set a default program for this file type first.");
+			if(SwingUtilities.isLeftMouseButton(e)){
+				if(e.getClickCount() == 2 && !e.isConsumed()){
+					DefaultTableModel copy = (DefaultTableModel) plist.getModel();
+					
+					//int row = plist.rowAtPoint(e.getPoint());
+					int row = plist.getSelectedRow();
+					System.out.println(row);
+					
+					JFileChooser dialog = new JFileChooser("Choose a save location:");
+					dialog.setApproveButtonText("Save");
+					
+					int choice = dialog.showOpenDialog(null);
+					
+					if(choice == JFileChooser.APPROVE_OPTION){
+						File file = dialog.getSelectedFile();
+						
+						String path = (String) copy.getValueAt(row, 2);
+						String ip = (String) copy.getValueAt(row, 3);
+						String id = (String) copy.getValueAt(row, 1);
+						
+						Drop drop = new Drop(path, "client", ip, file.getAbsolutePath(), id);
+						receive.add((String) file.getAbsolutePath());
+						smodel.addElement((String) file.getAbsolutePath());
+						
+						Main.status.getPool().addFile(drop);
+						Main.distro.addDrop(drop);
+					}
 				}
 			}
 		}
+
 		public void mouseEntered(MouseEvent e){}
 		public void mouseExited(MouseEvent e){}
 		public void mousePressed(MouseEvent e){}
 		public void mouseReleased(MouseEvent e){}
+	}
+	
+	private class ListListener implements MouseListener, MouseMotionListener{
+		public void mouseClicked(MouseEvent e){
+			if(SwingUtilities.isRightMouseButton(e)){
+				JList source = (JList) e.getSource();
+				
+				int index = source.locationToIndex(e.getPoint());
+				
+				if(index > -1){
+					sList = source;
+					cIndex = index;
+					
+					menu.show(e.getComponent(), e.getX(), e.getY());
+					menu.setVisible(true);
+				}
+			}
+			else if(SwingUtilities.isLeftMouseButton(e)){
+				if(e.getClickCount() == 2 && !e.isConsumed()){
+					JList source = (JList) e.getSource();
+					
+					try{
+						File file = new File(source.getSelectedValue().toString());
+						Desktop.getDesktop().open(file);
+					}
+					catch(IOException e1){
+						JOptionPane.showMessageDialog(null, "Could not open file. Please set a default program for this file type first.");
+					}
+				}
+			}
+		}
+		
+		public void mouseMoved(MouseEvent e){
+			JList source = (JList) e.getSource();
+			
+			int index = source.locationToIndex(e.getPoint());
+			
+			DefaultListModel model = source == distList ? dmodel : smodel;
+			
+			if(!model.isEmpty() && index > -1){
+				source.setToolTipText(source.getModel().getElementAt(index).toString().replaceAll("\\\\", "/"));
+			}
+			else{
+				source.setToolTipText(null);
+			}
+		}
+
+		public void mouseEntered(MouseEvent e){}
+		public void mouseExited(MouseEvent e){}
+		public void mousePressed(MouseEvent e){}
+		public void mouseReleased(MouseEvent e){}
+		public void mouseDragged(MouseEvent e){}
 	}
 }

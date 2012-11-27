@@ -1,8 +1,6 @@
 import java.awt.EventQueue;
-import java.awt.Font;
 import javax.swing.UIManager;
-import java.util.Enumeration;
-import javax.swing.plaf.FontUIResource;;
+import javax.swing.UnsupportedLookAndFeelException;
 
 public class Main {
 	public static Status status = new Status();
@@ -12,23 +10,23 @@ public class Main {
 	public static void main(String[] args){
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				try {
-					Enumeration keys = UIManager.getDefaults().keys();
-					
-				    while (keys.hasMoreElements()){
-				        Object key = keys.nextElement();
-				        Object value = UIManager.get(key);
-				        
-				        if (value instanceof javax.swing.plaf.FontUIResource){
-				            UIManager.put(key, new FontUIResource(new Font("Calibri",Font.PLAIN, 12)));
-				        }
-				    }
-					
-					frame = new Frame(status);
+			    try{
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				}
-				catch(Exception e){
+				catch(ClassNotFoundException e){
 					e.printStackTrace();
 				}
+				catch(InstantiationException e){
+					e.printStackTrace();
+				}
+				catch(IllegalAccessException e){
+					e.printStackTrace();
+				}
+				catch(UnsupportedLookAndFeelException e){
+					e.printStackTrace();
+				}
+				
+				frame = new Frame(status);
 			}
 		});
 	}

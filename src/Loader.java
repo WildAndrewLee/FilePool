@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 public class Loader {
 	private Object user;
 	private Object pool;
+	private Object contacts;
 	
 	public boolean loadUser(String user){
 		try {

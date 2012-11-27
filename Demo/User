@@ -2,5 +2,9 @@
 	"ID": "demo",
 	"PW": "demo",
 	"UID": 793881467,
-	"DN": "Demo"
+	"DN": "Demo",
+	
+	"Contacts": [
+		["Andrew Lee", "68.192.165.54"]
+	]
 }

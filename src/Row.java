@@ -3,6 +3,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -19,7 +20,20 @@ public class Row extends JLabel implements ListCellRenderer{
 	}
 
 	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus){
-		setText(value.toString());
+		File file = new File(value.toString());
+		String perc = null;
+		
+		if(value.toString().charAt(value.toString().length() - 1) != '%'){
+			setText(Utils.truncate(file.getPath().replaceAll("\\\\", "/"), 36));
+		}
+		else{
+			perc = value.toString().substring(value.toString().lastIndexOf("   "));
+			value = value.toString().substring(0, value.toString().lastIndexOf("   "));
+			value = Utils.truncate(value.toString(), 36);
+			
+			setText(value + "   " + perc);
+		}
+		
 		setPreferredSize(new Dimension(375, 22));
 		setBorder(BorderFactory.createEmptyBorder(0, 7, 0, 0));
 		
@@ -34,8 +48,8 @@ public class Row extends JLabel implements ListCellRenderer{
 			setForeground(Color.black);
 		}
 		
-		if(value.toString().charAt(value.toString().length() - 1) == '%'){
-			percent = Integer.parseInt(value.toString().split(" ")[value.toString().split(" ").length - 1].split("%")[0]);
+		if(perc != null){
+			percent = Integer.parseInt(perc.replaceAll("\\D", ""));
 		}
 		
 		return this;

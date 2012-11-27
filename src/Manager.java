@@ -13,29 +13,21 @@ public class Manager implements Runnable{
 	private ObjectOutputStream ooutput;
 	private ObjectInputStream oinput;
 	private ServerSocket server;
-	private String location, ip, type, dlto, id;
 	private Socket socket;
 	private int progress = 0;
-	
-	public Manager(String location){
-		this.location = location;
-	}
+	private Drop drop = null;
 	
 	public Manager(String location, String type, String ip, String dlto, String id){
 		System.out.println(type);
 		
-		this.location = location;
-		this.ip = ip;
-		this.type = type;
-		this.dlto = dlto;
-		this.id = id;
+		drop = new Drop(location, type, ip, dlto, id);
 	}
 	
 	public void run(){		
 		try{
-			if(type.equals("distributor")){
+			if(drop.getType().equals("distributor")){
 				while(true){
-					server = new ServerSocket(Integer.parseInt(id), 69);
+					server = new ServerSocket(Integer.parseInt(drop.getID()), 69);
 					
 					socket = server.accept();
 					
@@ -58,24 +50,24 @@ public class Manager implements Runnable{
 					oinput.close();
 				}
 			}
-			else if(type.equals("client")){
-				socket = new Socket(this.ip, Integer.parseInt(id));
+			else if(drop.getType().equals("client")){
+				socket = new Socket(drop.getIP(), Integer.parseInt(drop.getID()));
 				
 				ooutput = new ObjectOutputStream(socket.getOutputStream());
 				
-				Command command = new Command("GET", location, Main.status.getIP(), id);
+				Command command = new Command("GET", drop.getPath(), Main.status.getIP(), drop.getID());
 				
 				ooutput.writeObject(command);
 				ooutput.flush();
 				
-				server = new ServerSocket(Integer.parseInt(id), 69);
+				server = new ServerSocket(Integer.parseInt(drop.getID()), 69);
 				
 				socket = server.accept();
 				
 				oinput = new ObjectInputStream(socket.getInputStream());
 				input = socket.getInputStream();
 				
-				FileOutputStream foutput = new FileOutputStream(dlto);
+				FileOutputStream foutput = new FileOutputStream(drop.getDLTO());
 				byte[] buffer = new byte[32 * 1024];
 				
 				int read = 0, total = 0, size = 0;
@@ -88,7 +80,7 @@ public class Manager implements Runnable{
 
 					progress = (int) ((double) total / size * 100);
 					
-					Main.frame.getHub().updateProgress(dlto, progress);
+					Main.frame.getHub().updateProgress(drop.getDLTO(), progress);
 					
 					if(total / size == 1){
 						break;
@@ -107,7 +99,13 @@ public class Manager implements Runnable{
 			}
 		}
 		catch(ConnectException e){
-			e.printStackTrace();
+			try{
+				Thread.sleep(250);
+				run();
+			}
+			catch(InterruptedException ex){
+				e.printStackTrace();
+			}
 		}
 		catch(IOException e){
 			e.printStackTrace();		
@@ -122,5 +120,9 @@ public class Manager implements Runnable{
 	
 	public double getProgress(){
 		return progress;
+	}
+	
+	public Drop getDrop(){
+		return drop;
 	}
 }

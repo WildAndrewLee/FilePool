@@ -2,5 +2,9 @@
 	"ID": "alee",
 	"PW": "herpderp",
 	"UID": 981869418,
-	"DN": "Andrew Lee"
+	"DN": "Andrew Lee",
+	
+	"Contacts": [
+		["Nicholas Lum", "192.168.1.14"]
+	]
 }
