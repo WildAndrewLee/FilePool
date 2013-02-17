@@ -1,7 +1,0 @@
-File Pool
-
-About:
-File Pool is a program created to sync and distribute files across multiple computers ensuring that each computer has the latest version of any distributed file. In a way this would be Dropbox but it is not simply due to the fact that this, while similar, is a wildly different concept. The goal of File Pool is not to sync files across YOUR computers but to sync files across everybody else's.
-
-Note:
-All user accounts are stored in directories respectively named after their ID. 

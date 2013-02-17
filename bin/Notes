@@ -1,0 +1,33 @@
+/*
+				FileReader file = new FileReader(command);
+				BufferedReader br = new BufferedReader(file);
+				
+				String contents, line;
+				contents = line = br.readLine();
+				
+				while((line = br.readLine()) != null){
+					contents += System.getProperty("line.separator") + line;
+				}
+				
+				System.out.println(contents);
+				
+				output.writeObject(contents);
+				output.flush();
+				*/
+				
+				try{
+				Thread.sleep(500);
+				run();
+			}
+			catch(InterruptedException ex){}
+			
+			
+			["C:/Users/Andrew/Desktop/dero.pdf", "client", "192.168.1.5", "C:/Users/Andrew/Desktop/fp test/dero.pdf", "40192"],
+		["C:/Users/Andrew/Desktop/too much suffering.docx", "client", "192.168.1.5", "C:/Users/Andrew/Desktop/fp test/too much suffering.docx", "19528"],
+		["C:/Users/Andrew/Desktop/World of Goo v1.0.4.apk", "client", "192.168.1.5", "C:/Users/Andrew/Desktop/fp test/World of Goo v1.0.4.apk", "30193"],
+		["C:/Users/Andrew/Desktop/all the numbers.png", "client", "192.168.1.5", "C:/Users/Andrew/Desktop/fp test/all the numbers.png", "10529"]
+		
+		["C:/Users/Andrew/Desktop/dero.pdf", "distributor", "192.168.1.5", "", "40192"],
+		["C:/Users/Andrew/Desktop/too much suffering.docx", "distributor", "192.168.1.5", "", "19528"],
+		["C:/Users/Andrew/Desktop/World of Goo v1.0.4.apk", "distributor", "192.168.1.5", "", "30193"],
+		["C:/Users/Andrew/Desktop/all the numbers.png", "distributor", "192.168.1.5", "", "10529"]
