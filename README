@@ -5,3 +5,5 @@ File Pool is a program created to sync and distribute files across multiple comp
 
 Note:
 All user accounts are stored in directories respectively named after their ID. 
+
+This is not a completed product and should not be used in a production environment due to it's various security flaws. This was created simply as an experiment and for my own personal use.
